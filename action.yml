@@ -1,0 +1,22 @@
+name: 'Run Updock'
+description: 'Run Updock over a series of repositories to upgrade docker images'
+author: 'ItsVeryWindy'
+branding:
+  icon: play
+  color: green
+inputs:
+  updock-version:
+    description: 'Version of updock to run against'
+    required: true
+  github-token:
+    description: 'GitHub token to run the search, access repositories and create the pull requests. Can be passed in using {{ secrets.GITHUB_TOKEN }}'
+  search:
+    description: 'The GitHub search query to run, will default to the current repository'
+  config:
+    description: 'Inline configuration matching the updock format'
+  dry-run:
+    description: 'Run without creating pull requests'
+    default: false
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
