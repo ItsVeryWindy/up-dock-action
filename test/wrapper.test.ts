@@ -17,14 +17,15 @@ jest.mock('child_process', () => {
     const events = require('events');
 
     const real = jest.requireActual('child_process');
-
-    const mockSpawnEvent = new events.EventEmitter();
-
     const mockSpawn = jest.fn(() => {
+        const mockSpawnEvent = new events.EventEmitter();
+
+        setTimeout(() => mockSpawnEvent.emit('close', 0), 10);
+
         return mockSpawnEvent;
     });
 
-    return { ...real, spawn: mockSpawn, spawnEvent: mockSpawnEvent };
+    return { ...real, spawn: mockSpawn };
 });
 
 const child_process = require('child_process');
@@ -186,13 +187,5 @@ async function runUpDock(
 
     await wrapper.install();
 
-    let runPromise = wrapper.run(email, search, config, dryRun);
-
-    await new Promise(resolve => {
-        setTimeout(resolve, 100);
-    });
-
-    child_process.spawnEvent.emit('close', 0);
-
-    await runPromise;
+    await wrapper.run(email, search, config, dryRun);
 }
