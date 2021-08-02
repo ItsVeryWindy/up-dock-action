@@ -11,6 +11,8 @@ process.env['RUNNER_TEMP'] = tempDir;
 
 const IS_WINDOWS = process.platform === 'win32';
 
+const filename = IS_WINDOWS ? 'up-dock.exe' : 'up-dock';
+
 jest.mock('child_process', () => {
     const events = require('events');
 
@@ -64,9 +66,7 @@ describe('wrapper tests', () => {
 
         await installUpDock(null);
 
-        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.0.0', 'x64', 'up-dock.exe'))).toBe(
-            true
-        );
+        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.0.0', 'x64', filename))).toBe(true);
     });
 
     it('get specific version of up-dock', async () => {
@@ -77,9 +77,7 @@ describe('wrapper tests', () => {
 
         await installUpDock('1.1.2');
 
-        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.1.2', 'x64', 'up-dock.exe'))).toBe(
-            true
-        );
+        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.1.2', 'x64', filename))).toBe(true);
     });
 
     it('throw if version cannot be installed', async () => {
@@ -115,7 +113,7 @@ describe('wrapper tests', () => {
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
         expect(child_process.spawn.mock.calls[0][0]).toBe(
-            path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock')
+            path.join(toolDir, 'up-dock', '1.1.2', 'x64', filename)
         );
         expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
             '--email',
@@ -133,7 +131,7 @@ describe('wrapper tests', () => {
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
         expect(child_process.spawn.mock.calls[0][0]).toBe(
-            path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock')
+            path.join(toolDir, 'up-dock', '1.1.2', 'x64', filename)
         );
         expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
             '--email',
@@ -152,7 +150,7 @@ describe('wrapper tests', () => {
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
         expect(child_process.spawn.mock.calls[0][0]).toBe(
-            path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock')
+            path.join(toolDir, 'up-dock', '1.1.2', 'x64', filename)
         );
         expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
             '--email',
