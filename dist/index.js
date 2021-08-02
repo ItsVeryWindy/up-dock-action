@@ -88,6 +88,7 @@ const github_1 = __nccwpck_require__(5438);
 const os = __importStar(__nccwpck_require__(2087));
 const fs = __importStar(__nccwpck_require__(5747));
 const tc = __importStar(__nccwpck_require__(7784));
+const core = __importStar(__nccwpck_require__(2186));
 const IS_WINDOWS = process.platform === 'win32';
 class UpDockWrapper {
     constructor(version, token) {
@@ -104,9 +105,14 @@ class UpDockWrapper {
     }
     async install() {
         const version = this.version || (await this.getLatestVersion());
-        const downloadPath = await tc.downloadTool(`https://github.com/ItsVeryWindy/up-dock/releases/download/${version}/up-dock-linux-x64`);
+        const downloadUrl = `https://github.com/ItsVeryWindy/up-dock/releases/download/${version}/up-dock-linux-x64`;
+        core.info(`Downloading tool from '${downloadUrl}'`);
+        const downloadPath = await tc.downloadTool(downloadUrl);
+        core.info(`Saved tool to '${downloadPath}'`);
         const filename = IS_WINDOWS ? 'up-dock.exe' : 'up-dock';
-        this.path = path.join(await tc.cacheFile(downloadPath, filename, 'up-dock', version), filename);
+        const cachePath = await tc.cacheFile(downloadPath, filename, 'up-dock', version);
+        core.info(`Copied tool to '${cachePath}'`);
+        this.path = path.join(cachePath, filename);
     }
     async run(email, search, config, dryRun) {
         if (this.path == null)

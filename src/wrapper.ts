@@ -5,6 +5,7 @@ import { getOctokit } from '@actions/github';
 import * as os from 'os';
 import * as fs from 'fs';
 import * as tc from '@actions/tool-cache';
+import * as core from '@actions/core';
 
 const IS_WINDOWS = process.platform === 'win32';
 
@@ -31,16 +32,21 @@ export class UpDockWrapper {
     public async install(): Promise<void> {
         const version = this.version || (await this.getLatestVersion());
 
-        const downloadPath = await tc.downloadTool(
-            `https://github.com/ItsVeryWindy/up-dock/releases/download/${version}/up-dock-linux-x64`
-        );
+        const downloadUrl = `https://github.com/ItsVeryWindy/up-dock/releases/download/${version}/up-dock-linux-x64`;
+
+        core.info(`Downloading tool from '${downloadUrl}'`);
+
+        const downloadPath = await tc.downloadTool(downloadUrl);
+
+        core.info(`Saved tool to '${downloadPath}'`);
 
         const filename = IS_WINDOWS ? 'up-dock.exe' : 'up-dock';
 
-        this.path = path.join(
-            await tc.cacheFile(downloadPath, filename, 'up-dock', version),
-            filename
-        );
+        const cachePath = await tc.cacheFile(downloadPath, filename, 'up-dock', version);
+
+        core.info(`Copied tool to '${cachePath}'`);
+
+        this.path = path.join(cachePath, filename);
     }
 
     public async run(
