@@ -189,7 +189,7 @@ async function runUpDock(
     let runPromise = wrapper.run(email, search, config, dryRun);
 
     await new Promise(resolve => {
-        setTimeout(resolve, 10);
+        setTimeout(resolve, 100);
     });
 
     child_process.spawnEvent.emit('close', 0);
