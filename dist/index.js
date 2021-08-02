@@ -111,8 +111,11 @@ class UpDockWrapper {
         core.info(`Saved tool to '${downloadPath}'`);
         const filename = IS_WINDOWS ? 'up-dock.exe' : 'up-dock';
         const cachePath = await tc.cacheFile(downloadPath, filename, 'up-dock', version);
-        core.info(`Copied tool to '${cachePath}'`);
         this.path = path.join(cachePath, filename);
+        core.info(`Copied tool to '${this.path}'`);
+        if (!IS_WINDOWS) {
+            await exec.exec(`chmod +x ${this.path}`);
+        }
     }
     async run(email, search, config, dryRun) {
         if (this.path == null)
