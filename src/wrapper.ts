@@ -6,6 +6,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
+import { S_IXGRP, S_IXOTH, S_IXUSR } from 'constants';
 
 const IS_WINDOWS = process.platform === 'win32';
 
@@ -48,9 +49,11 @@ export class UpDockWrapper {
 
         core.info(`Copied tool to '${this.path}'`);
 
-        if (!IS_WINDOWS) {
-            await exec.exec(`chmod +x ${this.path}`);
-        }
+        let mode = (await fs.promises.stat(this.path)).mode;
+
+        mode = mode | S_IXUSR | S_IXGRP | S_IXOTH;
+
+        await fs.promises.chmod(this.path, mode);
     }
 
     public async run(

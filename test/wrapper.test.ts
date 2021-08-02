@@ -67,7 +67,10 @@ describe('wrapper tests', () => {
 
         await installUpDock(null);
 
-        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.0.0', 'x64', filename))).toBe(true);
+        const filePath = path.join(toolDir, 'up-dock', '1.0.0', 'x64', filename);
+
+        expect(fs.existsSync(filePath)).toBe(true);
+        expect(await io.findInPath(filePath)).toStrictEqual([filePath]);
     });
 
     it('get specific version of up-dock', async () => {
@@ -78,7 +81,10 @@ describe('wrapper tests', () => {
 
         await installUpDock('1.1.2');
 
-        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.1.2', 'x64', filename))).toBe(true);
+        const filePath = path.join(toolDir, 'up-dock', '1.1.2', 'x64', filename);
+
+        expect(fs.existsSync(filePath)).toBe(true);
+        expect(await io.findInPath(filePath)).toStrictEqual([filePath]);
     });
 
     it('throw if version cannot be installed', async () => {

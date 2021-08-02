@@ -89,6 +89,7 @@ const os = __importStar(__nccwpck_require__(2087));
 const fs = __importStar(__nccwpck_require__(5747));
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
+const constants_1 = __nccwpck_require__(7619);
 const IS_WINDOWS = process.platform === 'win32';
 class UpDockWrapper {
     constructor(version, token) {
@@ -113,9 +114,9 @@ class UpDockWrapper {
         const cachePath = await tc.cacheFile(downloadPath, filename, 'up-dock', version);
         this.path = path.join(cachePath, filename);
         core.info(`Copied tool to '${this.path}'`);
-        if (!IS_WINDOWS) {
-            await exec.exec(`chmod +x ${this.path}`);
-        }
+        let mode = (await fs.promises.stat(this.path)).mode;
+        mode = mode | constants_1.S_IXUSR | constants_1.S_IXGRP | constants_1.S_IXOTH;
+        await fs.promises.chmod(this.path, mode);
     }
     async run(email, search, config, dryRun) {
         if (this.path == null)
@@ -13089,6 +13090,14 @@ module.exports = require("assert");;
 
 "use strict";
 module.exports = require("child_process");;
+
+/***/ }),
+
+/***/ 7619:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("constants");;
 
 /***/ }),
 
