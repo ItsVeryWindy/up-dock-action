@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 7884:
+/***/ 3109:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -31,16 +31,16 @@ const core = __importStar(__nccwpck_require__(2186));
 const github_1 = __nccwpck_require__(5438);
 const wrapper_1 = __nccwpck_require__(215);
 async function run() {
-    var _a;
     try {
-        let version = core.getInput('updock-version');
-        let token = core.getInput('github-token', { required: true });
-        let search = (_a = core.getInput('search')) !== null && _a !== void 0 ? _a : `repo:${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
-        let config = core.getInput('config');
-        let dryRun = core.getBooleanInput('dry-run');
-        const wrapper = new wrapper_1.UpDockWrapper(version);
-        await wrapper.install(token);
-        await wrapper.run(search, config, token, dryRun);
+        const email = core.getInput('email') || '41898282+github-actions[bot]@users.noreply.github.com';
+        const version = core.getInput('updock-version') || null;
+        const token = core.getInput('github-token', { required: true });
+        const search = core.getInput('search') || `repo:${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
+        const config = core.getInput('config') || null;
+        const dryRun = core.getBooleanInput('dry-run');
+        const wrapper = new wrapper_1.UpDockWrapper(version, token);
+        await wrapper.install();
+        await wrapper.run(email, search, config, dryRun);
     }
     catch (error) {
         core.setFailed(error.message);
@@ -48,7 +48,9 @@ async function run() {
     }
 }
 exports.run = run;
-run();
+if (require.main === require.cache[eval('__filename')]) {
+    run();
+}
 
 
 /***/ }),
@@ -98,24 +100,19 @@ class UpDockWrapper {
             this.version = semver.clean(version);
             return;
         }
-        throw 'Invalid version number!';
+        throw new Error('Invalid version number!');
     }
     async install() {
-        let version = this.version || await this.getLatestVersion();
+        const version = this.version || (await this.getLatestVersion());
         const downloadPath = await tc.downloadTool(`https://github.com/ItsVeryWindy/up-dock/releases/download/${version}/up-dock-linux-x64`);
         const filename = IS_WINDOWS ? 'up-dock.exe' : 'up-dock';
         this.path = path.join(await tc.cacheFile(downloadPath, filename, 'up-dock', version), filename);
     }
-    async run(search, config, dryRun) {
+    async run(email, search, config, dryRun) {
         if (this.path == null)
-            throw 'install method has not been run';
-        let configFile = this.createConfigurationFile(config);
-        let args = [
-            '--search',
-            search,
-            '--token',
-            this.token
-        ];
+            throw new Error('install method has not been run');
+        const configFile = this.createConfigurationFile(config);
+        const args = ['--email', email, '--search', search, '--token', this.token];
         if (dryRun) {
             args.push('--dry-run');
         }
@@ -126,7 +123,11 @@ class UpDockWrapper {
     }
     async getLatestVersion() {
         const octokit = github_1.getOctokit(this.token);
-        const releases = await octokit.rest.repos.listReleases({ owner: 'ItsVeryWindy', repo: 'up-dock', 'per_page': 1 });
+        const releases = await octokit.rest.repos.listReleases({
+            owner: 'ItsVeryWindy',
+            repo: 'up-dock',
+            per_page: 1
+        });
         return releases.data[0].tag_name;
     }
     createConfigurationFile(config) {
@@ -13121,7 +13122,7 @@ module.exports = require("zlib");;
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(7884);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(3109);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()

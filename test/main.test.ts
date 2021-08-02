@@ -1,11 +1,13 @@
 const upDockVersion = '1.2.3';
 const gitHubToken = '123';
+const email = 'email';
 const search = 'search';
 const config = '{}';
 const dryRun = 'true';
 
 process.env['INPUT_UPDOCK-VERSION'] = upDockVersion;
 process.env['INPUT_GITHUB-TOKEN'] = gitHubToken;
+process.env['INPUT_EMAIL'] = email;
 process.env['INPUT_SEARCH'] = search;
 process.env['INPUT_CONFIG'] = config;
 process.env['INPUT_DRY-RUN'] = dryRun;
@@ -22,6 +24,7 @@ describe('run tests', () => {
 
         process.env['INPUT_UPDOCK-VERSION'] = upDockVersion;
         process.env['INPUT_GITHUB-TOKEN'] = gitHubToken;
+        process.env['INPUT_EMAIL'] = email;
         process.env['INPUT_SEARCH'] = search;
         process.env['INPUT_CONFIG'] = config;
         process.env['INPUT_DRY-RUN'] = dryRun;
@@ -30,7 +33,22 @@ describe('run tests', () => {
     it('install and run the wrapper', async () => {
         await run();
 
-        expectValues(upDockVersion, gitHubToken, search, config, true);
+        expectValues(upDockVersion, gitHubToken, email, search, config, true);
+    });
+
+    it('install and run the wrapper without email', async () => {
+        delete process.env['INPUT_EMAIL'];
+
+        await run();
+
+        expectValues(
+            upDockVersion,
+            gitHubToken,
+            '41898282+github-actions[bot]@users.noreply.github.com',
+            search,
+            config,
+            true
+        );
     });
 
     it('install and run the wrapper without search', async () => {
@@ -38,7 +56,7 @@ describe('run tests', () => {
 
         await run();
 
-        expectValues(upDockVersion, gitHubToken, 'repo:TestUser/TestRepo', config, true);
+        expectValues(upDockVersion, gitHubToken, email, 'repo:TestUser/TestRepo', config, true);
     });
 
     it('install and run the wrapper without config', async () => {
@@ -46,7 +64,7 @@ describe('run tests', () => {
 
         await run();
 
-        expectValues(upDockVersion, gitHubToken, search, null, true);
+        expectValues(upDockVersion, gitHubToken, email, search, null, true);
     });
 
     it('install and run the wrapper without dry run', async () => {
@@ -54,9 +72,9 @@ describe('run tests', () => {
 
         let thrown = false;
         try {
-          await run();
+            await run();
         } catch {
-          thrown = true;
+            thrown = true;
         }
         expect(thrown).toBe(true);
     });
@@ -66,9 +84,9 @@ describe('run tests', () => {
 
         let thrown = false;
         try {
-          await run();
+            await run();
         } catch {
-          thrown = true;
+            thrown = true;
         }
 
         expect(thrown).toBe(true);
@@ -79,11 +97,18 @@ describe('run tests', () => {
 
         await run();
 
-        expectValues(null, gitHubToken, search, config, true);
+        expectValues(null, gitHubToken, email, search, config, true);
     });
 });
 
-function expectValues(version: string | null, token: string, search: string, config: string | null, dryRun: boolean) {
+function expectValues(
+    version: string | null,
+    token: string,
+    email: string,
+    search: string,
+    config: string | null,
+    dryRun: boolean
+) {
     expect((UpDockWrapper as jest.Mock).mock.instances.length).toBe(1);
 
     let constructorCall = (UpDockWrapper as jest.Mock).mock.calls[0];
@@ -98,7 +123,8 @@ function expectValues(version: string | null, token: string, search: string, con
 
     let call = instance.run.mock.calls[0];
 
-    expect(call[0]).toBe(search);
-    expect(call[1]).toBe(config);
-    expect(call[2]).toBe(dryRun);
+    expect(call[0]).toBe(email);
+    expect(call[1]).toBe(search);
+    expect(call[2]).toBe(config);
+    expect(call[3]).toBe(dryRun);
 }

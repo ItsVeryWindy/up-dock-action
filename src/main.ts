@@ -2,30 +2,32 @@ import * as core from '@actions/core';
 import { context } from '@actions/github';
 import { UpDockWrapper } from './wrapper';
 
-export async function run() {
-  try {
-    let version = core.getInput('updock-version') || null;
+export async function run(): Promise<void> {
+    try {
+        const email =
+            core.getInput('email') || '41898282+github-actions[bot]@users.noreply.github.com';
 
-    let token = core.getInput('github-token', { required: true });
+        const version = core.getInput('updock-version') || null;
 
-    let search = core.getInput('search') || `repo:${context.repo.owner}/${context.repo.repo}`;
+        const token = core.getInput('github-token', { required: true });
 
-    let config = core.getInput('config') || null;
+        const search = core.getInput('search') || `repo:${context.repo.owner}/${context.repo.repo}`;
 
-    let dryRun = core.getBooleanInput('dry-run');
+        const config = core.getInput('config') || null;
 
-    const wrapper = new UpDockWrapper(version, token);
+        const dryRun = core.getBooleanInput('dry-run');
 
-    await wrapper.install();
+        const wrapper = new UpDockWrapper(version, token);
 
-    await wrapper.run(search, config, dryRun);
+        await wrapper.install();
 
-  } catch (error) {
-    core.setFailed(error.message);
-    throw error;
-  }
+        await wrapper.run(email, search, config, dryRun);
+    } catch (error) {
+        core.setFailed(error.message);
+        throw error;
+    }
 }
 
 if (require.main === module) {
-  run();
+    run();
 }

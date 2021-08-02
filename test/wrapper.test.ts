@@ -53,29 +53,33 @@ describe('wrapper tests', () => {
             .matchHeader('authorization', 'token 123')
             .reply(200, [
                 {
-                "tag_name": "v1.0.0"
+                    tag_name: 'v1.0.0'
                 }
             ]);
 
         nock('https://github.com')
             .persist()
             .get('/ItsVeryWindy/up-dock/releases/download/v1.0.0/up-dock-linux-x64')
-            .reply(200, "binary-file");
+            .reply(200, 'binary-file');
 
         await installUpDock(null);
 
-        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.0.0', 'x64', 'up-dock.exe'))).toBe(true);
+        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.0.0', 'x64', 'up-dock.exe'))).toBe(
+            true
+        );
     });
 
     it('get specific version of up-dock', async () => {
         nock('https://github.com')
             .persist()
             .get('/ItsVeryWindy/up-dock/releases/download/1.1.2/up-dock-linux-x64')
-            .reply(200, "binary-file");
+            .reply(200, 'binary-file');
 
         await installUpDock('1.1.2');
 
-        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.1.2', 'x64', 'up-dock.exe'))).toBe(true);
+        expect(fs.existsSync(path.join(toolDir, 'up-dock', '1.1.2', 'x64', 'up-dock.exe'))).toBe(
+            true
+        );
     });
 
     it('throw if version cannot be installed', async () => {
@@ -98,7 +102,7 @@ describe('wrapper tests', () => {
 
         let thrown = false;
         try {
-            await wrapper.run('', '', false);
+            await wrapper.run('', '', '', false);
         } catch {
             thrown = true;
         }
@@ -106,30 +110,60 @@ describe('wrapper tests', () => {
     });
 
     it('run up-dock', async () => {
-        await runUpDock('aaa', null, false);
+        await runUpDock('emmm', 'aaa', null, false);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
-        expect(child_process.spawn.mock.calls[0][0]).toBe(path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock'));
-        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual(["--search", "aaa", "--token", "123"]);
+        expect(child_process.spawn.mock.calls[0][0]).toBe(
+            path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock')
+        );
+        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
+            '--email',
+            'emmm',
+            '--search',
+            'aaa',
+            '--token',
+            '123'
+        ]);
     });
 
     it('dry run up-dock', async () => {
-        await runUpDock('bbb', null, true);
+        await runUpDock('emm', 'bbb', null, true);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
-        expect(child_process.spawn.mock.calls[0][0]).toBe(path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock'));
-        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual(["--search", "bbb", "--token", "123", "--dry-run"]);
+        expect(child_process.spawn.mock.calls[0][0]).toBe(
+            path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock')
+        );
+        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
+            '--email',
+            'emm',
+            '--search',
+            'bbb',
+            '--token',
+            '123',
+            '--dry-run'
+        ]);
     });
 
     it('run up-dock with config file', async () => {
-        await runUpDock('ccc', "{}", false);
+        await runUpDock('em', 'ccc', '{}', false);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
-        expect(child_process.spawn.mock.calls[0][0]).toBe(path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock'));
-        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual(["--search", "ccc", "--token", "123", "--config", path.join(tempDir, 'up-dock.json')]);
+        expect(child_process.spawn.mock.calls[0][0]).toBe(
+            path.join(toolDir, 'up-dock', '1.1.2', 'x64', IS_WINDOWS ? 'up-dock.exe' : 'up-dock')
+        );
+        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
+            '--email',
+            'em',
+            '--search',
+            'ccc',
+            '--token',
+            '123',
+            '--config',
+            path.join(tempDir, 'up-dock.json')
+        ]);
     });
 });
 
@@ -139,17 +173,22 @@ async function installUpDock(version: string | null): Promise<void> {
     await wrapper.install();
 }
 
-async function runUpDock(search: string, config: string | null, dryRun: boolean): Promise<void> {
+async function runUpDock(
+    email: string,
+    search: string,
+    config: string | null,
+    dryRun: boolean
+): Promise<void> {
     const wrapper = new UpDockWrapper('1.1.2', '123');
-  
+
     nock('https://github.com')
         .persist()
         .get('/ItsVeryWindy/up-dock/releases/download/1.1.2/up-dock-linux-x64')
-        .reply(200, "binary-file");
+        .reply(200, 'binary-file');
 
     await wrapper.install();
-    
-    let runPromise = wrapper.run(search, config, dryRun)
+
+    let runPromise = wrapper.run(email, search, config, dryRun);
 
     await new Promise(resolve => {
         setTimeout(resolve, 10);

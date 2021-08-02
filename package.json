@@ -6,7 +6,11 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "npx tsc --build && npx ncc build",
-    "test": "npx jest"
+    "test": "npx jest",
+    "format": "prettier --write **/*.ts",
+    "format-check": "prettier --check **/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "all": "npm run build && npm run format && npm run lint && npm test"
   },
   "repository": {
     "type": "git",
@@ -26,16 +30,21 @@
     "semver": "^7.3.5"
   },
   "devDependencies": {
+    "@actions/io": "^1.1.0",
+    "@typescript-eslint/parser": "^4.28.5",
     "@types/jest": "^26.0.23",
     "@types/node": "^15.6.1",
     "@types/semver": "^7.3.6",
     "@vercel/ncc": "^0.28.6",
+    "eslint": "^7.32.0",
+    "eslint-plugin-github": "^4.1.5",
+    "eslint-plugin-jest": "^24.4.0",
     "jest": "^27.0.3",
     "jest-circus": "^27.0.3",
+    "nock": "^13.0.11",
+    "prettier": "^2.3.2",
     "ts-jest": "^27.0.1",
-    "typescript": "^4.3.2",
-    "@actions/io": "^1.1.0",
-    "nock": "^13.0.11"
+    "typescript": "^4.3.2"
   },
   "jest": {
     "testEnvironment": "node"
