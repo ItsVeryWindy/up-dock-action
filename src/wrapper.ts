@@ -60,13 +60,14 @@ export class UpDockWrapper {
         email: string,
         search: string,
         config: string | null,
-        dryRun: boolean
+        dryRun: boolean,
+        authentication: string | null
     ): Promise<void> {
         if (this.path == null) throw new Error('install method has not been run');
 
         const configFile = this.createConfigurationFile(config);
 
-        const args = ['--email', email, '--search', search, '--token', this.token];
+        const args = ['--email', email, '--search', search];
 
         if (dryRun) {
             args.push('--dry-run');
@@ -76,7 +77,25 @@ export class UpDockWrapper {
             args.push('--config', configFile);
         }
 
-        await exec.exec(this.path, args);
+        let input = '';
+
+        args.push('--@token');
+
+        input += `${this.token}${os.EOL}`;
+
+        if (authentication) {
+            const authenticationJson = JSON.parse(authentication);
+
+            for (const key in authenticationJson) {
+                args.push('--@auth');
+
+                const item = authenticationJson[key];
+
+                input += `${key}=${item.username},${item.password}${os.EOL}`;
+            }
+        }
+
+        await exec.exec(this.path, args, { input: Buffer.from(input) });
     }
 
     private async getLatestVersion(): Promise<string> {

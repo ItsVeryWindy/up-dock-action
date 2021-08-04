@@ -38,9 +38,10 @@ async function run() {
         const search = core.getInput('search') || `repo:${github_1.context.repo.owner}/${github_1.context.repo.repo}`;
         const config = core.getInput('config') || null;
         const dryRun = core.getBooleanInput('dry-run');
+        const authentication = core.getInput('authentication') || null;
         const wrapper = new wrapper_1.UpDockWrapper(version, token);
         await wrapper.install();
-        await wrapper.run(email, search, config, dryRun);
+        await wrapper.run(email, search, config, dryRun, authentication);
     }
     catch (error) {
         core.setFailed(error.message);
@@ -118,18 +119,29 @@ class UpDockWrapper {
         mode = mode | constants_1.S_IXUSR | constants_1.S_IXGRP | constants_1.S_IXOTH;
         await fs.promises.chmod(this.path, mode);
     }
-    async run(email, search, config, dryRun) {
+    async run(email, search, config, dryRun, authentication) {
         if (this.path == null)
             throw new Error('install method has not been run');
         const configFile = this.createConfigurationFile(config);
-        const args = ['--email', email, '--search', search, '--token', this.token];
+        const args = ['--email', email, '--search', search];
         if (dryRun) {
             args.push('--dry-run');
         }
         if (configFile) {
             args.push('--config', configFile);
         }
-        await exec.exec(this.path, args);
+        let input = '';
+        args.push('--@token');
+        input += `${this.token}${os.EOL}`;
+        if (authentication) {
+            const authenticationJson = JSON.parse(authentication);
+            for (const key in authenticationJson) {
+                args.push('--@auth');
+                const item = authenticationJson[key];
+                input += `${key}=${item.username},${item.password}${os.EOL}`;
+            }
+        }
+        await exec.exec(this.path, args, { input: Buffer.from(input) });
     }
     async getLatestVersion() {
         const octokit = github_1.getOctokit(this.token);

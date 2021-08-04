@@ -1,4 +1,5 @@
 import io = require('@actions/io');
+import os = require('os');
 import fs = require('fs');
 import path = require('path');
 import nock from 'nock';
@@ -15,17 +16,29 @@ const filename = IS_WINDOWS ? 'up-dock.exe' : 'up-dock';
 
 jest.mock('child_process', () => {
     const events = require('events');
+    const { PassThrough } = require('stream');
+
+    let data: string;
 
     const real = jest.requireActual('child_process');
     const mockSpawn = jest.fn(() => {
         const mockSpawnEvent = new events.EventEmitter();
+
+        let stdin = new PassThrough();
+
+        const buffers: Buffer[] = [];
+
+        stdin.on('data', (data: Buffer) => buffers.push(data));
+        stdin.on('end', () => (data = Buffer.concat(buffers).toString()));
+
+        mockSpawnEvent.stdin = stdin;
 
         setTimeout(() => mockSpawnEvent.emit('close', 0), 10);
 
         return mockSpawnEvent;
     });
 
-    return { ...real, spawn: mockSpawn };
+    return { ...real, spawn: mockSpawn, stdin: () => data };
 });
 
 const child_process = require('child_process');
@@ -107,7 +120,7 @@ describe('wrapper tests', () => {
 
         let thrown = false;
         try {
-            await wrapper.run('', '', '', false);
+            await wrapper.run('', '', '', false, null);
         } catch {
             thrown = true;
         }
@@ -115,7 +128,7 @@ describe('wrapper tests', () => {
     });
 
     it('run up-dock', async () => {
-        await runUpDock('emmm', 'aaa', null, false);
+        await runUpDock('emmm', 'aaa', null, false, null);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
@@ -127,13 +140,13 @@ describe('wrapper tests', () => {
             'emmm',
             '--search',
             'aaa',
-            '--token',
-            '123'
+            '--@token'
         ]);
+        expect(child_process.stdin()).toBe(`123${os.EOL}`);
     });
 
     it('dry run up-dock', async () => {
-        await runUpDock('emm', 'bbb', null, true);
+        await runUpDock('emm', 'bbb', null, true, null);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
@@ -145,14 +158,14 @@ describe('wrapper tests', () => {
             'emm',
             '--search',
             'bbb',
-            '--token',
-            '123',
-            '--dry-run'
+            '--dry-run',
+            '--@token'
         ]);
+        expect(child_process.stdin()).toBe(`123${os.EOL}`);
     });
 
     it('run up-dock with config file', async () => {
-        await runUpDock('em', 'ccc', '{}', false);
+        await runUpDock('em', 'ccc', '{}', false, null);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
@@ -164,11 +177,40 @@ describe('wrapper tests', () => {
             'em',
             '--search',
             'ccc',
-            '--token',
-            '123',
             '--config',
-            path.join(tempDir, 'up-dock.json')
+            path.join(tempDir, 'up-dock.json'),
+            '--@token'
         ]);
+        expect(child_process.stdin()).toBe(`123${os.EOL}`);
+    });
+
+    it('run up-dock with authentication', async () => {
+        let auth = {
+            'repository.com': {
+                username: 'my-username',
+                password: 'my-password'
+            }
+        };
+
+        await runUpDock('em', 'ccc', null, false, JSON.stringify(auth));
+
+        expect(child_process.spawn.mock.calls.length).toBe(1);
+
+        expect(child_process.spawn.mock.calls[0][0]).toBe(
+            path.join(toolDir, 'up-dock', '1.1.2', 'x64', filename)
+        );
+        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
+            '--email',
+            'em',
+            '--search',
+            'ccc',
+            '--@token',
+            '--@auth'
+        ]);
+
+        expect(child_process.stdin()).toBe(
+            `123${os.EOL}repository.com=my-username,my-password${os.EOL}`
+        );
     });
 });
 
@@ -182,7 +224,8 @@ async function runUpDock(
     email: string,
     search: string,
     config: string | null,
-    dryRun: boolean
+    dryRun: boolean,
+    authentication: string | null
 ): Promise<void> {
     const wrapper = new UpDockWrapper('1.1.2', '123');
 
@@ -193,5 +236,5 @@ async function runUpDock(
 
     await wrapper.install();
 
-    await wrapper.run(email, search, config, dryRun);
+    await wrapper.run(email, search, config, dryRun, authentication);
 }

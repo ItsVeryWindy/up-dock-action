@@ -5,18 +5,21 @@ branding:
   icon: play
   color: green
 inputs:
+  email:
+    description: 'Email to use in the commit, will default to github actions email'
   updock-version:
-    description: 'Version of updock to run against'
-    required: true
+    description: 'Version of updock to run against, will default to latest'
   github-token:
     description: 'GitHub token to run the search, access repositories and create the pull requests. Can be passed in using {{ secrets.GITHUB_TOKEN }}'
   search:
     description: 'The GitHub search query to run, will default to the current repository'
   config:
-    description: 'Inline configuration matching the updock format'
+    description: 'Inline configuration matching the up-dock format'
   dry-run:
     description: 'Run without creating pull requests'
     default: false
+  authentication:
+    description: 'Authentication for a repository, json string with the format { "repository.com": { "username": "username", "password": "password" } }'
 runs:
   using: 'node12'
   main: 'dist/index.js'

@@ -17,11 +17,13 @@ export async function run(): Promise<void> {
 
         const dryRun = core.getBooleanInput('dry-run');
 
+        const authentication = core.getInput('authentication') || null;
+
         const wrapper = new UpDockWrapper(version, token);
 
         await wrapper.install();
 
-        await wrapper.run(email, search, config, dryRun);
+        await wrapper.run(email, search, config, dryRun, authentication);
     } catch (error) {
         core.setFailed(error.message);
         throw error;
