@@ -1,7 +1,8 @@
 # up-dock-action
 
 <p align="left">
-  <a href="https://github.com/ItsVeryWindy/up-dock-action"><img alt="GitHub Actions status" src="https://github.com/ItsVeryWindy/up-dock-action/workflows/build-test/badge.svg"></a>
+  <a href="https://github.com/ItsVeryWindy/up-dock-action"><img alt="GitHub Actions status" src="https://github.com/ItsVeryWindy/up-dock-action/workflows/build/badge.svg"></a>
+  <a href="https://github.com/ItsVeryWindy/up-dock-action"><img alt="GitHub Actions status" src="https://github.com/ItsVeryWindy/up-dock-action/workflows/release/badge.svg"></a>
 </p>
 
 This action executes [up-dock](https://github.com/ItsVeryWindy/up-dock) to keep your docker images up to date, it will:
