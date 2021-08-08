@@ -3,12 +3,13 @@ import os = require('os');
 import fs = require('fs');
 import path = require('path');
 import nock from 'nock';
-import tar from 'tar';
+import utils = require('@actions/cache/lib/internal/cacheUtils');
+import tar = require('@actions/cache/lib/internal/tar');
 
 const toolDir = path.join(__dirname, 'runner', 'tools');
 const tempDir = path.join(__dirname, 'runner', 'temp');
 const cachePath = 'up-dock-cache.json';
-const archivePath = path.join(os.tmpdir(), 'archive.tgz');
+const archiveDir = path.join(tempDir, 'archive');
 
 process.env['RUNNER_TOOL_CACHE'] = toolDir;
 process.env['RUNNER_TEMP'] = tempDir;
@@ -54,15 +55,13 @@ jest.mock('child_process', () => {
 const child_process = require('child_process');
 
 import { UpDockWrapper } from '../src/wrapper';
+import { cacheFile } from '@actions/tool-cache';
 
 async function cleanupFiles() {
     await io.rmRF(toolDir);
     await io.rmRF(tempDir);
     if (fs.existsSync(cachePath)) {
         await fs.promises.rm(cachePath);
-    }
-    if (fs.existsSync(archivePath)) {
-        await fs.promises.rm(archivePath);
     }
 }
 
@@ -261,12 +260,12 @@ describe('wrapper tests', () => {
     it('run up-dock with caching when cache available', async () => {
         await fs.promises.writeFile(cachePath, 'cache-file');
 
-        await tar.create(
-            {
-                file: archivePath
-            },
-            [cachePath]
-        );
+        const compressionMethod = await utils.getCompressionMethod();
+        const archivePath = path.join(archiveDir, utils.getCacheFileName(compressionMethod));
+
+        await fs.promises.mkdir(archiveDir);
+
+        await tar.createTar(archiveDir, [cachePath], compressionMethod);
 
         await fs.promises.rm(cachePath);
 
@@ -291,10 +290,10 @@ describe('wrapper tests', () => {
 
         await runUpDock('em', 'ccc', null, false, null, true);
 
-        expect(child_process.spawn.mock.calls.length).toBe(5);
+        expect(child_process.spawn.mock.calls.length).toBe(7);
 
-        expect(child_process.spawn.mock.calls[2][0]).toBe(updockPath);
-        expect(child_process.spawn.mock.calls[2][1]).toStrictEqual([
+        expect(child_process.spawn.mock.calls[4][0]).toBe(updockPath);
+        expect(child_process.spawn.mock.calls[4][1]).toStrictEqual([
             '--email',
             'em',
             '--search',
