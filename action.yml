@@ -20,6 +20,9 @@ inputs:
     default: false
   authentication:
     description: 'Authentication for a repository, json string with the format { "repository.com": { "username": "username", "password": "password" } }'
+  cache:
+    description: 'Cache the results from this run to re-use in another'
+    default: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

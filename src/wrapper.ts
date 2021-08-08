@@ -5,6 +5,7 @@ import { getOctokit } from '@actions/github';
 import * as os from 'os';
 import * as fs from 'fs';
 import * as tc from '@actions/tool-cache';
+import * as c from '@actions/cache';
 import * as core from '@actions/core';
 import { S_IXGRP, S_IXOTH, S_IXUSR } from 'constants';
 
@@ -61,7 +62,8 @@ export class UpDockWrapper {
         search: string,
         config: string | null,
         dryRun: boolean,
-        authentication: string | null
+        authentication: string | null,
+        cache: boolean
     ): Promise<void> {
         if (this.path == null) throw new Error('install method has not been run');
 
@@ -95,7 +97,22 @@ export class UpDockWrapper {
             }
         }
 
+        const cacheFile = 'up-dock-cache.json';
+
+        if (cache) {
+            const cacheKey = await c.restoreCache([cacheFile], 'up-dock-cache');
+
+            if (cacheKey && fs.existsSync(cacheFile)) {
+                args.push('--cache');
+                args.push(cacheFile);
+            }
+        }
+
         await exec.exec(this.path, args, { input: Buffer.from(input) });
+
+        if (cache && fs.existsSync(cacheFile)) {
+            await c.saveCache([cacheFile], 'up-dock-cache');
+        }
     }
 
     private async getLatestVersion(): Promise<string> {

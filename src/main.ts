@@ -19,11 +19,13 @@ export async function run(): Promise<void> {
 
         const authentication = core.getInput('authentication') || null;
 
+        const cache = core.getBooleanInput('cache');
+
         const wrapper = new UpDockWrapper(version, token);
 
         await wrapper.install();
 
-        await wrapper.run(email, search, config, dryRun, authentication);
+        await wrapper.run(email, search, config, dryRun, authentication, cache);
     } catch (error) {
         core.setFailed(error.message);
         throw error;

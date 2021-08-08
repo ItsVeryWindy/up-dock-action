@@ -1,3 +1,5 @@
+const os = require('os');
+
 module.exports = {
     clearMocks: true,
     moduleFileExtensions: ['js', 'ts'],
@@ -13,7 +15,7 @@ module.exports = {
 const processStdoutWrite = process.stdout.write.bind(process.stdout)
 
 process.stdout.write = (str, encoding, cb) => {
-  if (!str.match(/^::/)) {
-    return processStdoutWrite(str, encoding, cb)
-  }
+  let filteredStr = str.split(os.EOL).filter(line => !line.match(/^::/)).join(os.EOL)
+
+  return processStdoutWrite(filteredStr, encoding, cb)
 }

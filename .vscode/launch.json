@@ -33,7 +33,10 @@
                 "jest.config.js"
             ],
             "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "DEBUG": "nock.*"
+            }
           }
     ]
 }
