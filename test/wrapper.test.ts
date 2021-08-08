@@ -263,7 +263,6 @@ describe('wrapper tests', () => {
 
         await tar.create(
             {
-                gzip: true,
                 file: archivePath
             },
             [cachePath]
