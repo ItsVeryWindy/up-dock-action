@@ -9,6 +9,7 @@ import tar = require('@actions/cache/lib/internal/tar');
 const toolDir = path.join(__dirname, 'runner', 'tools');
 const tempDir = path.join(__dirname, 'runner', 'temp');
 const cachePath = 'up-dock-cache.json';
+const reportPath = 'up-dock-report.json';
 const archiveDir = path.join(tempDir, 'archive');
 
 process.env['RUNNER_TOOL_CACHE'] = toolDir;
@@ -55,13 +56,17 @@ jest.mock('child_process', () => {
 const child_process = require('child_process');
 
 import { UpDockWrapper } from '../src/wrapper';
-import { cacheFile } from '@actions/tool-cache';
 
 async function cleanupFiles() {
     await io.rmRF(toolDir);
     await io.rmRF(tempDir);
+
     if (fs.existsSync(cachePath)) {
         await fs.promises.rm(cachePath);
+    }
+
+    if (fs.existsSync(reportPath)) {
+        await fs.promises.rm(reportPath);
     }
 }
 
@@ -139,7 +144,7 @@ describe('wrapper tests', () => {
 
         let thrown = false;
         try {
-            await wrapper.run('', '', '', false, null, false);
+            await wrapper.run('', '', '', false, null, false, false);
         } catch {
             thrown = true;
         }
@@ -147,7 +152,7 @@ describe('wrapper tests', () => {
     });
 
     it('run up-dock', async () => {
-        await runUpDock('emmm', 'aaa', null, false, null, false);
+        await runUpDock('emmm', 'aaa', null, false, null, false, false);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
@@ -163,7 +168,7 @@ describe('wrapper tests', () => {
     });
 
     it('dry run up-dock', async () => {
-        await runUpDock('emm', 'bbb', null, true, null, false);
+        await runUpDock('emm', 'bbb', null, true, null, false, false);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
@@ -180,7 +185,7 @@ describe('wrapper tests', () => {
     });
 
     it('run up-dock with config file', async () => {
-        await runUpDock('em', 'ccc', '{}', false, null, false);
+        await runUpDock('em', 'ccc', '{}', false, null, false, false);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
@@ -205,7 +210,7 @@ describe('wrapper tests', () => {
             }
         };
 
-        await runUpDock('em', 'ccc', null, false, JSON.stringify(auth), false);
+        await runUpDock('em', 'ccc', null, false, JSON.stringify(auth), false, false);
 
         expect(child_process.spawn.mock.calls.length).toBe(1);
 
@@ -241,7 +246,7 @@ describe('wrapper tests', () => {
 
         await fs.promises.writeFile(cachePath, 'cache-file');
 
-        await runUpDock('em', 'ccc', null, false, null, true);
+        await runUpDock('em', 'ccc', null, false, null, true, false);
 
         expect(child_process.spawn.mock.calls.length).toEqual(4);
 
@@ -288,7 +293,7 @@ describe('wrapper tests', () => {
             .post('/_apis/artifactcache/caches/cache-id')
             .reply(200);
 
-        await runUpDock('em', 'ccc', null, false, null, true);
+        await runUpDock('em', 'ccc', null, false, null, true, false);
 
         expect(child_process.spawn.mock.calls.length).toBe(7);
 
@@ -305,6 +310,31 @@ describe('wrapper tests', () => {
 
         expect(child_process.stdin()).toBe(`123${os.EOL}`);
     });
+
+    it('run up-dock with reporting', async () => {
+        await fs.promises.writeFile(reportPath, 'report-file');
+
+        const mockStdOut = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+        await runUpDock('em', 'ccc', null, false, null, false, true);
+
+        expect(child_process.spawn.mock.calls.length).toBe(1);
+
+        expect(child_process.spawn.mock.calls[0][0]).toBe(updockPath);
+        expect(child_process.spawn.mock.calls[0][1]).toStrictEqual([
+            '--email',
+            'em',
+            '--search',
+            'ccc',
+            '--@token',
+            '--report',
+            reportPath
+        ]);
+
+        expect(child_process.stdin()).toBe(`123${os.EOL}`);
+
+        expect(mockStdOut).toHaveBeenCalledWith(`::set-output name=report::report-file${os.EOL}`);
+    });
 });
 
 async function installUpDock(version: string | null): Promise<void> {
@@ -319,7 +349,8 @@ async function runUpDock(
     config: string | null,
     dryRun: boolean,
     authentication: string | null,
-    cache: boolean
+    cache: boolean,
+    report: boolean
 ): Promise<void> {
     const wrapper = new UpDockWrapper('1.1.2', '123');
 
@@ -330,5 +361,5 @@ async function runUpDock(
 
     await wrapper.install();
 
-    await wrapper.run(email, search, config, dryRun, authentication, cache);
+    await wrapper.run(email, search, config, dryRun, authentication, cache, report);
 }

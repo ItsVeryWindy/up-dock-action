@@ -63,7 +63,8 @@ export class UpDockWrapper {
         config: string | null,
         dryRun: boolean,
         authentication: string | null,
-        cache: boolean
+        cache: boolean,
+        report: boolean
     ): Promise<void> {
         if (this.path == null) throw new Error('install method has not been run');
 
@@ -108,10 +109,23 @@ export class UpDockWrapper {
             }
         }
 
+        const reportFile = 'up-dock-report.json';
+
+        if (report) {
+            args.push('--report');
+            args.push(reportFile);
+        }
+
         await exec.exec(this.path, args, { input: Buffer.from(input) });
 
         if (cache && fs.existsSync(cacheFile)) {
             await c.saveCache([cacheFile], 'up-dock-cache');
+        }
+
+        if (report && fs.existsSync(reportFile)) {
+            const reportContents = await fs.promises.readFile(reportFile, 'utf8');
+
+            core.setOutput('report', reportContents);
         }
     }
 

@@ -23,6 +23,9 @@ inputs:
   cache:
     description: 'Cache the results from this run to re-use in another'
     default: false
+  report:
+    description: 'Enables report output that can be piped into another action'
+    default: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

@@ -40,9 +40,10 @@ async function run() {
         const dryRun = core.getBooleanInput('dry-run');
         const authentication = core.getInput('authentication') || null;
         const cache = core.getBooleanInput('cache');
+        const report = core.getBooleanInput('report');
         const wrapper = new wrapper_1.UpDockWrapper(version, token);
         await wrapper.install();
-        await wrapper.run(email, search, config, dryRun, authentication, cache);
+        await wrapper.run(email, search, config, dryRun, authentication, cache, report);
     }
     catch (error) {
         core.setFailed(error.message);
@@ -121,7 +122,7 @@ class UpDockWrapper {
         mode = mode | constants_1.S_IXUSR | constants_1.S_IXGRP | constants_1.S_IXOTH;
         await fs.promises.chmod(this.path, mode);
     }
-    async run(email, search, config, dryRun, authentication, cache) {
+    async run(email, search, config, dryRun, authentication, cache, report) {
         if (this.path == null)
             throw new Error('install method has not been run');
         const configFile = this.createConfigurationFile(config);
@@ -151,9 +152,18 @@ class UpDockWrapper {
                 args.push(cacheFile);
             }
         }
+        const reportFile = 'up-dock-report.json';
+        if (report) {
+            args.push('--report');
+            args.push(reportFile);
+        }
         await exec.exec(this.path, args, { input: Buffer.from(input) });
         if (cache && fs.existsSync(cacheFile)) {
             await c.saveCache([cacheFile], 'up-dock-cache');
+        }
+        if (report && fs.existsSync(reportFile)) {
+            const reportContents = await fs.promises.readFile(reportFile, 'utf8');
+            core.setOutput('report', reportContents);
         }
     }
     async getLatestVersion() {

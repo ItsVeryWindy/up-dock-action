@@ -6,6 +6,7 @@ const config = '{}';
 const dryRun = 'true';
 const authentication = 'authentication';
 const cache = 'false';
+const report = 'true';
 
 process.env['INPUT_UPDOCK-VERSION'] = upDockVersion;
 process.env['INPUT_GITHUB-TOKEN'] = gitHubToken;
@@ -15,6 +16,7 @@ process.env['INPUT_CONFIG'] = config;
 process.env['INPUT_DRY-RUN'] = dryRun;
 process.env['INPUT_AUTHENTICATION'] = authentication;
 process.env['INPUT_CACHE'] = cache;
+process.env['INPUT_REPORT'] = report;
 process.env['GITHUB_REPOSITORY'] = 'TestUser/TestRepo';
 
 jest.mock('../src/wrapper');
@@ -34,6 +36,7 @@ describe('run tests', () => {
         process.env['INPUT_DRY-RUN'] = dryRun;
         process.env['INPUT_AUTHENTICATION'] = authentication;
         process.env['INPUT_CACHE'] = cache;
+        process.env['INPUT_REPORT'] = report;
     });
 
     it('install and run the wrapper', async () => {
@@ -136,6 +139,18 @@ describe('run tests', () => {
 
     it('install and run the wrapper without cache', async () => {
         delete process.env['INPUT_CACHE'];
+
+        let thrown = false;
+        try {
+            await run();
+        } catch {
+            thrown = true;
+        }
+        expect(thrown).toBe(true);
+    });
+
+    it('install and run the wrapper without report', async () => {
+        delete process.env['INPUT_REPORT'];
 
         let thrown = false;
         try {
